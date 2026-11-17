@@ -1,4 +1,4 @@
-﻿/* VOLI Cerdas - App logic */
+/* VOLI Cerdas - App logic */
 (function(){
   const D = window.VOLI_DATA;
   const STORAGE_KEY = "voli_cerdas_v1";
@@ -76,23 +76,23 @@
       "passing-atas": `<svg viewBox="0 0 220 120" width="100%" height="120"><circle cx="60" cy="70" r="14" fill="#17b890"/><line x1="60" y1="84" x2="60" y2="110" stroke="#17b890" stroke-width="4"/><path d="M50 55 Q60 40 70 55" stroke="#17b890" stroke-width="3" fill="none"/><circle cx="60" cy="35" r="8" fill="#fbbf24"/><text x="90" y="60" font-size="11" fill="#6b7280">Mangkuk jari di atas dahi</text></svg>`,
       "servis-bawah": `<svg viewBox="0 0 240 120" width="100%" height="120"><circle cx="40" cy="80" r="14" fill="#ff7a3d"/><line x1="40" y1="94" x2="40" y2="115" stroke="#ff7a3d" stroke-width="4"/><circle cx="90" cy="60" r="9" fill="#fbbf24"/><path d="M55 80 Q90 90 120 50" stroke="#ff7a3d" stroke-width="3" fill="none"/><text x="125" y="60" font-size="11" fill="#6b7280">Ayunkan dari bawah</text></svg>`,
     };
-    return map[id] || `<div class="subtle">Ilustrasi teknik tersedia di Galeri Teknik. ðŸ</div>`;
+    return map[id] || `<div class="subtle">Ilustrasi teknik tersedia di Galeri Teknik. 🏐</div>`;
   }
 
   // ---------- Navigation ----------
   const NAV_ITEMS = [
-    { id:"home", label:"Beranda", icon:"ðŸ " },
-    { id:"classSelect", label:"Pilih Kelas", icon:"ðŸŽ“" },
-    { id:"learnMap", label:"Peta Belajar", icon:"ðŸ—ºï¸" },
-    { id:"material", label:"Materi", icon:"ðŸ“š" },
-    { id:"gallery", label:"Galeri Teknik", icon:"ðŸŽ¬" },
-    { id:"simulation", label:"Simulasi", icon:"ðŸŽ®" },
-    { id:"missions", label:"Misi", icon:"â­" },
-    { id:"quiz", label:"Kuis", icon:"â“" },
-    { id:"summative", label:"Asesmen", icon:"ðŸ“" },
-    { id:"reflection", label:"Refleksi", icon:"ðŸ’­" },
-    { id:"report", label:"Rapor", icon:"ðŸ“Š" },
-    { id:"teacher", label:"Guru", icon:"ðŸ‘©â€ðŸ«" }
+    { id:"home", label:"Beranda", icon:"🏠" },
+    { id:"classSelect", label:"Pilih Kelas", icon:"🎓" },
+    { id:"learnMap", label:"Peta Belajar", icon:"🗺️" },
+    { id:"material", label:"Materi", icon:"📚" },
+    { id:"gallery", label:"Galeri Teknik", icon:"🎬" },
+    { id:"simulation", label:"Simulasi", icon:"🎮" },
+    { id:"missions", label:"Misi", icon:"⭐" },
+    { id:"quiz", label:"Kuis", icon:"❓" },
+    { id:"summative", label:"Asesmen", icon:"📝" },
+    { id:"reflection", label:"Refleksi", icon:"💭" },
+    { id:"report", label:"Rapor", icon:"📊" },
+    { id:"teacher", label:"Guru", icon:"👩‍🏫" }
   ];
 
   function renderNav(){
@@ -130,7 +130,7 @@
     const div = document.createElement("div");
     div.innerHTML = `
       <div class="hero">
-        <div class="hero-art">ðŸ</div>
+        <div class="hero-art">🏐</div>
         <h1>VOLI Cerdas</h1>
         <p>Belajar bola voli PJOK untuk kelas 4, 5, 6 SD. Belajar, berlatih, dan bermain dengan ceria!</p>
         <div class="flex gap-8 flex-wrap">
@@ -139,9 +139,9 @@
         </div>
       </div>
       <div class="grid grid-3 mt-16">
-        <div class="card card-hover"><div style="font-size:32px">ðŸ“š</div><h3>Materi Lengkap</h3><p class="subtle">Pengenalan, aturan, teknik, taktik, keselamatan, sportivitas.</p></div>
-        <div class="card card-hover"><div style="font-size:32px">ðŸŽ®</div><h3>Simulasi Interaktif</h3><p class="subtle">Latihan passing, servis, rally dengan skor otomatis.</p></div>
-        <div class="card card-hover"><div style="font-size:32px">ðŸ“Š</div><h3>Asesmen & Rapor</h3><p class="subtle">Kuis, rubrik praktik, laporan per murid dan kelas.</p></div>
+        <div class="card card-hover"><div style="font-size:32px">📚</div><h3>Materi Lengkap</h3><p class="subtle">Pengenalan, aturan, teknik, taktik, keselamatan, sportivitas.</p></div>
+        <div class="card card-hover"><div style="font-size:32px">🎮</div><h3>Simulasi Interaktif</h3><p class="subtle">Latihan passing, servis, rally dengan skor otomatis.</p></div>
+        <div class="card card-hover"><div style="font-size:32px">📊</div><h3>Asesmen & Rapor</h3><p class="subtle">Kuis, rubrik praktik, laporan per murid dan kelas.</p></div>
       </div>
       <div class="card mt-16">
         <h3 class="section-title">Cara Pakai</h3>
@@ -177,7 +177,7 @@
       };
     }else{
       form.innerHTML='<p>Pilih kelas dan namamu. Tanpa PIN: catatan ini bukan kehadiran terverifikasi. Nama dalam daftar terlihat oleh pengunjung.</p><label>Kelas</label><select class="input" id="class"></select><label>Nama murid</label><select class="input" id="student"></select><button class="btn btn-primary" id="login" disabled>Masuk</button>';
-      status.textContent='Memuat daftar murid…';
+      status.textContent='Memuat daftar murid...';
       cloud.rpc('pjok_roster').then(({data,error})=>{
         if(error){status.textContent='Daftar belum tersedia. Guru perlu menjalankan SQL pengaturan database.';return;}
         const roster=data||[], cls=form.querySelector('#class'), student=form.querySelector('#student'), button=form.querySelector('#login');
@@ -185,7 +185,7 @@
         function refresh(){student.replaceChildren();for(const s of roster.filter(s=>s.class_name===cls.value)) student.add(new Option(s.name,s.id));button.disabled=!student.value;}
         cls.onchange=refresh;refresh();status.textContent=roster.length?'':'Daftar murid masih kosong. Hubungi guru.';
         button.onclick=async()=>{
-          button.disabled=true;status.textContent='Mencatat waktu masuk…';
+          button.disabled=true;status.textContent='Mencatat waktu masuk...';
           try{
             const stu=roster.find(s=>s.id===student.value);if(!stu) throw new Error('Pilih nama dahulu.');
             const {error}=await cloud.rpc('pjok_enter',{p_student_id:stu.id});if(error) throw error;
@@ -212,16 +212,16 @@
     div.innerHTML = `
       <div class="hero" style="background:linear-gradient(135deg,${cls.color},#8b5cf6);">
         <div class="hero-art">${cls.emoji}</div>
-        <h1>Halo, ${state.user.name}! ðŸ‘‹</h1>
+        <h1>Halo, ${state.user.name}! 👋</h1>
         <p>Kelas ${kelas} - ${cls.tagline}</p>
         <div class="progress" style="max-width:300px;background:rgba(255,255,255,0.3);"><div style="width:${pct}%;background:#fff;"></div></div>
         <small style="opacity:.9">Progres materi: ${completed}/${totalM} (${pct}%)</small>
       </div>
       <div class="grid grid-2 mt-16">
-        <div class="card"><h3>ðŸ“š Lanjut Belajar</h3><p class="subtle">Buka materi sesuai kelasmu.</p><button class="btn btn-primary btn-sm" id="goMat">Materi</button></div>
-        <div class="card"><h3>ðŸŽ® Simulasi</h3><p class="subtle">Latih passing, servis, rally.</p><button class="btn btn-secondary btn-sm" id="goSim">Main Simulasi</button></div>
-        <div class="card"><h3>â“ Kuis</h3><p class="subtle">Uji pengetahuanmu.</p><button class="btn btn-accent btn-sm" id="goQuiz">Kerjakan Kuis</button></div>
-        <div class="card"><h3>â­ Misi</h3><p class="subtle">Selesaikan misi dan dapatkan lencana.</p><button class="btn btn-outline btn-sm" id="goMis">Lihat Misi</button></div>
+        <div class="card"><h3>📚 Lanjut Belajar</h3><p class="subtle">Buka materi sesuai kelasmu.</p><button class="btn btn-primary btn-sm" id="goMat">Materi</button></div>
+        <div class="card"><h3>🎮 Simulasi</h3><p class="subtle">Latih passing, servis, rally.</p><button class="btn btn-secondary btn-sm" id="goSim">Main Simulasi</button></div>
+        <div class="card"><h3>❓ Kuis</h3><p class="subtle">Uji pengetahuanmu.</p><button class="btn btn-accent btn-sm" id="goQuiz">Kerjakan Kuis</button></div>
+        <div class="card"><h3>⭐ Misi</h3><p class="subtle">Selesaikan misi dan dapatkan lencana.</p><button class="btn btn-outline btn-sm" id="goMis">Lihat Misi</button></div>
       </div>
       <div class="card mt-16">
         <h3 class="section-title">Profil Murid</h3>
@@ -350,7 +350,7 @@
     const qroot = div.querySelector("#matQuiz");
     let qi = 0;
     function renderQ(){
-      if(qi >= mat.kuis.length){ qroot.innerHTML = "<p class='text-muted'>Kuis singkat selesai. ðŸŽ‰</p>"; return; }
+      if(qi >= mat.kuis.length){ qroot.innerHTML = "<p class='text-muted'>Kuis singkat selesai. 🎉</p>"; return; }
       const q = mat.kuis[qi];
       qroot.innerHTML = `
         <p><strong>${qi+1}. ${q.q}</strong></p>
@@ -365,7 +365,7 @@
             if(idx===q.ans) x.classList.add("correct");
             if(idx===i && !correct) x.classList.add("wrong");
           });
-          document.getElementById("qfb").innerHTML = `<p>${correct?"âœ… Benar!":"âŒ Kurang tepat."} ${q.explain||""}</p><button class="btn btn-primary btn-sm" id="qnext">Lanjut</button>`;
+          document.getElementById("qfb").innerHTML = `<p>${correct?"✅ Benar!":"❌ Kurang tepat."} ${q.explain||""}</p><button class="btn btn-primary btn-sm" id="qnext">Lanjut</button>`;
           document.getElementById("qnext").addEventListener("click", ()=>{ qi++; renderQ(); });
         });
       });
@@ -375,7 +375,7 @@
     div.querySelector("#markDone").addEventListener("click", ()=>{
       if(state.role==="student" && state.user){
         const p = progressOf(state.user.id);
-        if(!p.completed.includes(mat.id)){ p.completed.push(mat.id); save(); toast("Materi ditandai selesai âœ…"); }
+        if(!p.completed.includes(mat.id)){ p.completed.push(mat.id); save(); toast("Materi ditandai selesai ✅"); }
         else toast("Sudah selesai sebelumnya");
       } else toast("Masuk sebagai murid untuk menyimpan progres");
     });
@@ -389,12 +389,12 @@
     div.innerHTML = `<h2 class="section-title">Galeri Teknik Dasar</h2><p class="subtle">Ilustrasi langkah teknik. (Demo visual)</p><div class="grid grid-3 mt-12" id="gGrid"></div>`;
     const g = div.querySelector("#gGrid");
     const techs = [
-      {name:"Sikap Siap", art:"ðŸ§", steps:["Kaki selebar bahu","Lutut menekuk","Tangan siap"]},
-      {name:"Passing Bawah", art:"ðŸ¤²", steps:["Genggam tangan","Lengan lurus","Bola mengenai lengan bawah"]},
-      {name:"Passing Atas", art:"ðŸ™Œ", steps:["Mangkuk di dahi","Jari terbuka","Dorong lembut"]},
-      {name:"Servis Bawah", art:"âœ‹", steps:["Tahan bola","Ayunkan dari bawah","Pukul bola"]},
-      {name:"Mengumpan", art:"ðŸŽ¯", steps:["Terima bola","Lihat teman","Umpan akurat"]},
-      {name:"Blocking", art:"ðŸ›¡ï¸", steps:["Dekat net","Lompat","Tangan terangkat"]}
+      {name:"Sikap Siap", art:"🧍", steps:["Kaki selebar bahu","Lutut menekuk","Tangan siap"]},
+      {name:"Passing Bawah", art:"🤲", steps:["Genggam tangan","Lengan lurus","Bola mengenai lengan bawah"]},
+      {name:"Passing Atas", art:"🙌", steps:["Mangkuk di dahi","Jari terbuka","Dorong lembut"]},
+      {name:"Servis Bawah", art:"✋", steps:["Tahan bola","Ayunkan dari bawah","Pukul bola"]},
+      {name:"Mengumpan", art:"🎯", steps:["Terima bola","Lihat teman","Umpan akurat"]},
+      {name:"Blocking", art:"🛡️", steps:["Dekat net","Lompat","Tangan terangkat"]}
     ];
     techs.forEach(t=>{
       const c = document.createElement("div"); c.className="card text-center";
@@ -501,7 +501,7 @@
       if(ok){
         sim.ball = {x: 80, y: 30 + Math.random()*40};
         renderBall();
-        info.innerHTML = `<p class="text-muted">âœ… Keputusan baik! Bola berhasil melewati net. ${act==="attack"?"Kamu menempatkan bola ke ruang kosong.":act==="set"?"Umpan bagus.":act==="receive"?"Penerimaan stabil.":"Kiriman aman."}</p>`;
+        info.innerHTML = `<p class="text-muted">✅ Keputusan baik! Bola berhasil melewati net. ${act==="attack"?"Kamu menempatkan bola ke ruang kosong.":act==="set"?"Umpan bagus.":act==="receive"?"Penerimaan stabil.":"Kiriman aman."}</p>`;
         // opponent response
         setTimeout(()=>{
           const oppOk = Math.random() < (diff==="easy"?0.5:diff==="med"?0.65:0.75);
@@ -512,12 +512,12 @@
             setTimeout(promptDecision, 600);
           } else {
             sim.score++; updateScore();
-            info.innerHTML += `<p style="color:var(--success);font-weight:800">ðŸ† Poin untukmu! Lawan gagal mengembalikan.</p>`;
+            info.innerHTML += `<p style="color:var(--success);font-weight:800">🏆 Poin untukmu! Lawan gagal mengembalikan.</p>`;
             setTimeout(resetRally, 900);
           }
         }, 700);
       } else {
-        info.innerHTML = `<p style="color:var(--danger);font-weight:800">âŒ Keputusan kurang tepat. Bola tidak melewati net / keluar. Poin lawan.</p>`;
+        info.innerHTML = `<p style="color:var(--danger);font-weight:800">❌ Keputusan kurang tepat. Bola tidak melewati net / keluar. Poin lawan.</p>`;
         sim.opp++; updateScore();
         setTimeout(resetRally, 900);
       }
@@ -576,9 +576,9 @@
       const ok = Math.random() < success;
       const res = div.querySelector("#srvResult");
       if(ok){
-        res.innerHTML = `<p style="color:var(--success);font-weight:800">âœ… Servis masuk ke ${dir}! ${type==="bawah"?"Servis bawah konsisten.":"Servis atas butuh timing."}</p>`;
+        res.innerHTML = `<p style="color:var(--success);font-weight:800">✅ Servis masuk ke ${dir}! ${type==="bawah"?"Servis bawah konsisten.":"Servis atas butuh timing."}</p>`;
       } else {
-        res.innerHTML = `<p style="color:var(--danger);font-weight:800">âŒ Servis tidak masuk. Coba perbaiki ayunan dan arah.</p>`;
+        res.innerHTML = `<p style="color:var(--danger);font-weight:800">❌ Servis tidak masuk. Coba perbaiki ayunan dan arah.</p>`;
       }
     });
 
@@ -672,7 +672,7 @@
               if(idx===i && !correct) x.classList.add("wrong");
             });
             const fb = document.getElementById("qfb");
-            fb.innerHTML = `<p>${correct?"âœ… Benar!":"âŒ Salah."} ${q.explain||""}</p><button class="btn btn-primary btn-sm" id="qnext">Lanjut</button>`;
+            fb.innerHTML = `<p>${correct?"✅ Benar!":"❌ Salah."} ${q.explain||""}</p><button class="btn btn-primary btn-sm" id="qnext">Lanjut</button>`;
             document.getElementById("qnext").addEventListener("click", ()=>{ qi++; render(); });
           });
         });
@@ -740,7 +740,7 @@
             const v = b.dataset.v === "true";
             const correct = v === s.ans;
             if(correct) score++;
-            document.getElementById("qfb").innerHTML = `<p>${correct?"âœ… Benar!":"âŒ Salah."}</p><button class="btn btn-primary btn-sm" id="qnext">Lanjut</button>`;
+            document.getElementById("qfb").innerHTML = `<p>${correct?"✅ Benar!":"❌ Salah."}</p><button class="btn btn-primary btn-sm" id="qnext">Lanjut</button>`;
             document.getElementById("qnext").addEventListener("click", ()=>{ qi++; render(); });
           });
         });
@@ -763,7 +763,7 @@
           document.getElementById("orderChosen").innerHTML = `<p><strong>Urutanmu:</strong> ${chosen.map((x,j)=>(j+1)+". "+x).join(" | ")}</p>`;
           if(chosen.length===steps.length){
             const correct = chosen.every((x,i)=>x===steps[i]);
-            document.getElementById("orderFb").innerHTML = `<p>${correct?"âœ… Urutan benar!":"âŒ Urutan kurang tepat."} Urutan yang benar: ${steps.join(" â†’ ")}</p>`;
+            document.getElementById("orderFb").innerHTML = `<p>${correct?"✅ Urutan benar!":"❌ Urutan kurang tepat."} Urutan yang benar: ${steps.join(" → ")}</p>`;
           }
         });
         opts.appendChild(b);
@@ -789,7 +789,7 @@
           const i = parseInt(s.dataset.i);
           if(s.value !== pairs[i].desc) okAll = false;
         });
-        document.getElementById("matchFb").innerHTML = `<p>${okAll?"âœ… Semua cocok!":"âŒ Ada yang belum cocok."}</p>`;
+        document.getElementById("matchFb").innerHTML = `<p>${okAll?"✅ Semua cocok!":"❌ Ada yang belum cocok."}</p>`;
       });
     });
 
@@ -839,7 +839,7 @@
           b.addEventListener("click", ()=>{
             const i=parseInt(b.dataset.i); const correct=i===q.ans; if(correct) score++;
             area.querySelectorAll(".quiz-option").forEach((x,idx)=>{ if(idx===q.ans) x.classList.add("correct"); if(idx===i&&!correct) x.classList.add("wrong"); });
-            document.getElementById("sfb").innerHTML = `<p>${correct?"âœ… Benar!":"âŒ Salah."}</p><button class="btn btn-primary btn-sm" id="sn">Lanjut</button>`;
+            document.getElementById("sfb").innerHTML = `<p>${correct?"✅ Benar!":"❌ Salah."}</p><button class="btn btn-primary btn-sm" id="sn">Lanjut</button>`;
             document.getElementById("sn").addEventListener("click", ()=>{ qi++; render(); });
           });
         });
@@ -873,7 +873,7 @@
       if(state.role!=="student"||!state.user){ toast("Masuk sebagai murid"); return; }
       const p = progressOf(state.user.id);
       p.reflection = { r1:div.querySelector("#r1").value, r2:div.querySelector("#r2").value, r3:div.querySelector("#r3").value, r4:div.querySelector("#r4").value, date:new Date().toLocaleDateString("id-ID") };
-      save(); toast("Refleksi disimpan ðŸ’­");
+      save(); toast("Refleksi disimpan 💭");
     });
     return div;
   };
@@ -918,7 +918,7 @@
   // Teacher dashboard
   views.entryHistory = function(){
     const div=document.createElement('div');
-    div.innerHTML='<div class="card"><h2>Catatan Masuk Aplikasi</h2><p>Bukan bukti kehadiran terverifikasi. Maksimal 500 catatan terbaru. Waktu mengikuti zona perangkat.</p><button class="btn" id="back">Kembali</button><button class="btn" id="logout">Keluar Guru</button><div id="entries" role="status">Memuat…</div></div>';
+    div.innerHTML='<div class="card"><h2>Catatan Masuk Aplikasi</h2><p>Bukan bukti kehadiran terverifikasi. Maksimal 500 catatan terbaru. Waktu mengikuti zona perangkat.</p><button class="btn" id="back">Kembali</button><button class="btn" id="logout">Keluar Guru</button><div id="entries" role="status">Memuat...</div></div>';
     div.querySelector('#back').onclick=()=>navigate('teacher');
     div.querySelector('#logout').onclick=async()=>{await window.PJOK_CLOUD.auth.signOut();state.role=null;state.user=null;navigate('home');};
     (async()=>{
@@ -929,7 +929,7 @@
         const {data,error}=await window.PJOK_CLOUD.from('pjok_entries').select('entered_at,pjok_students(name,class_name)').order('entered_at',{ascending:false}).limit(500);
         if(error) throw error;
         box.textContent='';
-        for(const entry of data){const row=document.createElement('p');row.textContent=`${entry.pjok_students?.class_name} — ${entry.pjok_students?.name} — ${new Date(entry.entered_at).toLocaleString('id-ID')}`;box.appendChild(row);}
+        for(const entry of data){const row=document.createElement('p');row.textContent=`${entry.pjok_students?.class_name} - ${entry.pjok_students?.name} - ${new Date(entry.entered_at).toLocaleString('id-ID')}`;box.appendChild(row);}
         if(!data.length) box.textContent='Belum ada catatan masuk.';
       }catch(e){box.textContent=e.message;}
     })();

@@ -228,3 +228,12 @@ label { font-weight:700; font-size:14px; display:block; margin-bottom:4px; }
   .topbar, .bottom-nav, .no-print { display:none !important; }
   .main-content { padding:0; max-width:100%; }
 }
+/* SVG icons */
+.menu-icon { width:1.15em; height:1.15em; display:inline-block; vertical-align:-0.2em; flex:none; }
+.brand-ball .menu-icon { width:32px; height:32px; color:var(--primary,#2f6df6); }
+.icon-btn .menu-icon { width:22px; height:22px; }
+.bottom-nav .bn-icon { display:flex; justify-content:center; }
+.bottom-nav .bn-icon .menu-icon { width:22px; height:22px; }
+.hero .hero-art .menu-icon { width:64px; height:64px; }
+.card [style*="font-size:32px"] .menu-icon, .card [style*="font-size:48px"] .menu-icon { width:1em; height:1em; color:var(--primary,#2f6df6); }
+h1 .menu-icon, h3 .menu-icon, p .menu-icon { margin-right:.25em; }
