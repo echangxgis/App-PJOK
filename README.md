@@ -131,13 +131,17 @@ Menerapkan strategi gerak sederhana dan memecahkan masalah gerak; menerapkan per
 
 ## ⚖️ Privasi Data
 
-- Repositori ini **tidak memuat nama asli, jenis kelamin, atau nilai murid**
+- Dokumen publik tidak memuat nama asli, jenis kelamin asli, atau nilai murid; template generator memakai JK fiktif `L` untuk data demo.
 - Nama diganti kode demo (Murid 01, Murid 02, dst.)
 - **Jangan mengunggah data pribadi murid ke repositori publik**
 - Gunakan salinan privat untuk data asli sesuai kebijakan sekolah
 
 ---
 
-## 📄 Lisensi
+## Batasan aplikasi dan keamanan
 
-Materi ini dibuat untuk keperluan pembelajaran PJOK. Silakan digunakan dan disesuaikan untuk konteks pendidikan.
+Aplikasi ini merupakan prototipe pembelajaran. Progres tersimpan di `localStorage` browser, bukan basis data bersama. Login dan kata sandi guru bersifat demo, bukan pengamanan data. Jangan gunakan untuk data pribadi atau nilai resmi murid pada hosting publik. Simulasi layar tidak menggantikan penilaian gerak nyata oleh guru. Pengujian fungsi web menyeluruh belum dilakukan dalam penyiapan paket ini.
+
+## Hak penggunaan
+
+Lisensi distribusi belum ditetapkan oleh pemilik repositori. Konfirmasikan izin sebelum mendistribusikan ulang materi atau kode.
