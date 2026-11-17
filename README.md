@@ -87,6 +87,26 @@ Tampilan menggunakan judul berwarna, tabel berarsir, kotak pengingat, dan diagra
    lalu buka http://localhost:8080/
 3. Atau buka `index.html` langsung di browser
 
+### Deploy ke Vercel
+
+1. Masuk ke [Vercel](https://vercel.com/) menggunakan akun GitHub.
+2. Pilih **Add New → Project**, lalu impor `echangxgis/App-PJOK`.
+3. Gunakan branch `main` dan **Root Directory** kosong (root repositori).
+4. Pilih **Framework Preset: Other**. Konfigurasi `vercel.json` menetapkan build `node scripts/build.mjs` dan output `dist` secara otomatis.
+5. Klik **Deploy**. Tidak memerlukan environment variable atau API key.
+
+Alamat setelah deploy:
+- `/` — aplikasi PJOK utama.
+- `/voli-cerdas/` — aplikasi VOLI Cerdas (gunakan garis miring terakhir agar aset relatif dimuat dengan benar).
+- `/voli` — pintasan menuju VOLI Cerdas.
+- `/dokumen/namafile.docx` atau `.xlsx` — unduhan dokumen publik.
+
+Build hanya menyalin halaman, aset, dan dokumen publik ke `dist/`; skrip PowerShell tidak dijalankan di Vercel. Perubahan berikutnya yang di-push ke branch `main` memicu deployment otomatis jika integrasi GitHub Vercel aktif.
+
+Untuk memeriksa build lokal, instal Node.js 22 atau lebih baru lalu jalankan `npm run build`. Tidak ada dependensi npm tambahan.
+
+**Penting:** deployment Vercel tidak menambahkan database atau autentikasi produksi. Data tetap di localStorage per browser/per domain. Data lokal pada alamat lama tidak otomatis berpindah ke domain Vercel. Semua dokumen dalam `dokumen/` dapat diakses publik, termasuk kunci jawaban; jangan unggah data murid atau materi rahasia.
+
 ### Mode Pengguna
 
 | Mode | Akses | Fitur |
