@@ -107,6 +107,16 @@ Untuk memeriksa build lokal, instal Node.js 22 atau lebih baru lalu jalankan `np
 
 **Penting:** deployment Vercel tidak menambahkan database atau autentikasi produksi. Data tetap di localStorage per browser/per domain. Data lokal pada alamat lama tidak otomatis berpindah ke domain Vercel. Semua dokumen dalam `dokumen/` dapat diakses publik, termasuk kunci jawaban; jangan unggah data murid atau materi rahasia.
 
+### Login Murid dan Catatan Masuk (Supabase)
+
+1. Buka Supabase → **SQL Editor**, lalu jalankan `supabase/schema.sql`.
+2. Impor daftar murid melalui SQL privat milik guru. File daftar nama asli tidak disimpan di repositori ini.
+3. Buat akun guru di **Authentication → Users → Add user**, lalu jalankan:
+   `insert into public.pjok_teachers(user_id) select id from auth.users where email = 'email-guru@sekolah.sch.id';`
+4. Murid masuk dengan memilih kelas dan nama. Guru melihat riwayat melalui **Dashboard Guru → Lihat Catatan Masuk Murid**.
+
+Batasan: tanpa PIN, murid dapat memilih nama temannya, sehingga catatan ini bukan bukti kehadiran terverifikasi. Daftar nama dapat dilihat siapa pun yang membuka halaman login. Progres belajar dan nilai masih tersimpan di localStorage.
+
 ### Mode Pengguna
 
 | Mode | Akses | Fitur |
