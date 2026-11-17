@@ -1,0 +1,143 @@
+# PJOK Kelas 4 — Bola Voli Mini
+
+Repositori ini berisi **materi pembelajaran, instrumen penilaian, dan aplikasi web interaktif** untuk mata pelajaran PJOK kelas 4 SD.
+
+**Unit 2: Kingdom Character in Play** — *Integritas dan Nilai Kerajaan dalam Permainan*
+
+> Dalam permainan, kita belajar menggunakan kemampuan gerak, bersikap jujur dan adil, serta menunjukkan kasih Kristus melalui kerja sama.
+
+---
+
+## 📂 Struktur Repositori
+
+```
+├── dokumen/                              # Dokumen pembelajaran dan penilaian
+│   ├── Materi_Bola_Voli_Mini_Kelas_4.docx      # Materi lengkap 16 halaman untuk murid
+│   ├── Soal_Sumatif_Tertulis_Bola_Voli_Kelas_4.docx  # 10 PG + 5 esai situasi + kunci guru
+│   ├── Penilaian_Praktik_Bola_Voli_Mini_Kelas_4.xlsx  # Rubrik + lembar observasi (data demo)
+│   └── Template_Daftar_Murid.xlsx               # Template kosong untuk daftar murid
+│
+├── scripts/                              # Kode PowerShell pembuat dokumen
+│   ├── buat_materi.ps1                          # Membuat file Word materi pembelajaran
+│   └── buat_penilaian.ps1                       # Membuat file Excel rubrik penilaian
+│
+├── css/style.css                         # Stylesheet aplikasi web utama
+├── js/
+│   ├── app.js                                   # Logika aplikasi web utama
+│   └── data.js                                  # Data materi dan soal
+│
+├── voli-cerdas/                          # Aplikasi web interaktif mandiri
+│   ├── index.html
+│   ├── app.js
+│   ├── data.js
+│   ├── styles.css
+│   └── README.md
+│
+├── index.html                            # Halaman utama aplikasi web
+└── serve.ps1                             # Server statis sederhana (PowerShell)
+```
+
+---
+
+## 📘 Dokumen Pembelajaran
+
+### 1. Materi Bola Voli Mini (`dokumen/Materi_Bola_Voli_Mini_Kelas_4.docx`)
+
+Buku belajar **16 halaman** untuk murid, mencakup:
+
+- Sikap siap, passing bawah, passing atas, dan servis bawah
+- Mengatur arah dan kekuatan bola
+- Strategi posisi, komunikasi, dan pengambilan keputusan
+- Aturan permainan dan fair play
+- Kerja sama dan partisipasi positif
+- Integrasi nilai Kristiani (Creation–Fall–Redemption–Consummation)
+- Latihan persiapan praktikum dan ringkasan teori
+- Daftar cek kesiapan dan ruang refleksi murid
+
+Tampilan menggunakan judul berwarna, tabel berarsir, kotak pengingat, dan diagram posisi pemain.
+
+### 2. Soal Sumatif Tertulis (`dokumen/Soal_Sumatif_Tertulis_Bola_Voli_Kelas_4.docx`)
+
+- **10 soal pilihan ganda** — teknik dasar bola voli (kalimat sederhana kelas 4)
+- **5 soal jawaban singkat berbasis situasi** — strategi, kontrol bola, kejujuran, kerja sama, dan nilai Kristiani
+- Ruang jawaban murid
+- **Kunci jawaban, rubrik penskoran, dan rumus nilai** di bagian khusus guru (pisahkan sebelum dibagikan)
+
+### 3. Rubrik Penilaian Praktikum (`dokumen/Penilaian_Praktik_Bola_Voli_Mini_Kelas_4.xlsx`)
+
+- Dua sheet kelas: **4 Alexandria** dan **4 Antiokhia**
+- Empat aspek penilaian: Keterampilan, Strategi, Fair play, Kerja sama (masing-masing 25%)
+- Skor 1–4 pada sel kuning; nilai dan tindak lanjut dihitung otomatis
+- Kolom opsional nilai teori dan gabungan 70:30
+- Sheet **Panduan dan Rubrik** berisi deskriptor lengkap
+
+> ⚠️ **Versi publik ini menggunakan nama demo.** Isi data murid asli hanya pada salinan privat.
+
+---
+
+## 💻 Aplikasi Web
+
+### Cara Menjalankan
+
+1. Buka folder proyek
+2. Jalankan server statis:
+   ```powershell
+   .\serve.ps1
+   ```
+   lalu buka http://localhost:8080/
+3. Atau buka `index.html` langsung di browser
+
+### Mode Pengguna
+
+| Mode | Akses | Fitur |
+|------|-------|-------|
+| **Murid** | Pilih "Mulai Belajar", isi nama dan kelas | Materi, kuis, simulasi, misi, refleksi, rapor |
+| **Guru** | Pilih "Mode Guru", kata sandi demo `guru123` | Dashboard, input rubrik, rekap, ekspor CSV |
+
+### Cara Menguji
+
+1. Login sebagai murid (Andi, kelas 4)
+2. Buka Materi → tandai selesai
+3. Kerjakan Kuis Topik dan Diagnostik
+4. Mainkan Simulasi (pilih tindakan, cek skor)
+5. Selesaikan Misi
+6. Isi Refleksi
+7. Lihat Rapor
+8. Login sebagai guru → cek Dashboard, input rubrik praktik, lihat rekap, ekspor CSV
+
+---
+
+## 🛠️ Scripts
+
+Script PowerShell untuk membuat ulang dokumen Word dan Excel menggunakan COM Automation (memerlukan Microsoft Office di Windows):
+
+```powershell
+# Membuat materi Word
+powershell -ExecutionPolicy Bypass -File scripts\buat_materi.ps1
+
+# Membuat Excel rubrik penilaian (memerlukan Template_Daftar_Murid.xlsx)
+powershell -ExecutionPolicy Bypass -File scripts\buat_penilaian.ps1
+```
+
+---
+
+## 📋 Capaian Pembelajaran (CP)
+
+**Elemen:** Belajar Melalui Gerak
+
+Menerapkan strategi gerak sederhana dan memecahkan masalah gerak; menerapkan peraturan untuk menumbuhkan fair play di dalam berbagai aktivitas jasmani; dan berpartisipasi secara positif dalam kelompok atau tim di dalam berbagai aktivitas jasmani.
+
+---
+
+## ⚖️ Privasi Data
+
+- Repositori ini **tidak memuat nama asli, jenis kelamin, atau nilai murid**
+- Nama diganti kode demo (Murid 01, Murid 02, dst.)
+- **Jangan mengunggah data pribadi murid ke repositori publik**
+- Gunakan salinan privat untuk data asli sesuai kebijakan sekolah
+
+---
+
+## 📄 Lisensi
+
+Materi ini dibuat untuk keperluan pembelajaran PJOK. Silakan digunakan dan disesuaikan untuk konteks pendidikan.

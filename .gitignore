@@ -1,0 +1,11 @@
+# Data privat dan kredensial
+.env
+.env.*
+*.pem
+*.key
+*privat*
+*Pribadi*
+~$*
+Thumbs.db
+.DS_Store
+*.log

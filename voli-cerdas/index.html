@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOLI Cerdas - PJOK Bola Voli SD</title>
+  <meta name="description" content="Aplikasi pembelajaran interaktif bola voli untuk PJOK kelas 4, 5, dan 6 SD." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Lewati ke konten utama</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-ball" aria-hidden="true">🏐</span>
+      <div>
+        <strong>VOLI Cerdas</strong>
+        <small>PJOK Kelas 4-6 SD</small>
+      </div>
+    </div>
+    <nav class="topnav" aria-label="Navigasi utama">
+      <button data-route="home" class="nav-btn">Beranda</button>
+      <button data-route="learn" class="nav-btn">Peta Belajar</button>
+      <button data-route="materials" class="nav-btn">Materi</button>
+      <button data-route="technique" class="nav-btn">Galeri Teknik</button>
+      <button data-route="sim" class="nav-btn">Simulasi</button>
+      <button data-route="missions" class="nav-btn">Misi</button>
+      <button data-route="quiz" class="nav-btn">Kuis</button>
+      <button data-route="summative" class="nav-btn">Asesmen Sumatif</button>
+      <button data-route="reflection" class="nav-btn">Refleksi</button>
+      <button data-route="report" class="nav-btn">Rapor</button>
+      <button data-route="teacher" class="nav-btn">Guru</button>
+    </nav>
+    <div class="userbox">
+      <span id="userLabel">Demo Murid</span>
+      <select id="roleSelect" aria-label="Pilih peran">
+        <option value="student">Murid</option>
+        <option value="teacher">Guru</option>
+        <option value="admin">Administrator</option>
+      </select>
+    </div>
+  </header>
+
+  <main id="main" class="container" tabindex="-1">
+    <section id="view" aria-live="polite"></section>
+  </main>
+
+  <footer class="footer">
+    <p>Data demo ditandai jelas. Simulasi layar melatih pengetahuan dan pengambilan keputusan, tetapi tidak menggantikan asesmen gerak nyata di lapangan.</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
