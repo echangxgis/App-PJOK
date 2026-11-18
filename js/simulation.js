@@ -57,7 +57,7 @@ window.VOLI_SIMULATION = function ({ state, progressOf, save, toast }) {
     mode = ui("mode").value; level = levels[ui("difficulty").value];
     running = true; paused = false; score = opponent = rally = 0; remaining = 60; quality = 1; trail = [];
     players.forEach((p,i) => { p.x = p.tx = homes[i][0]; p.y = p.ty = homes[i][1]; });
-    ball = {x:-2,y:6,z:1}; enter("serve", 1); say("Arahkan servis ke lapangan lawan. Tekan Servis atau Spasi untuk mengayun.");
+    ball = {x:-2,y:10.3,z:1}; players[0].x = players[0].tx = -2; players[0].y = players[0].ty = 10.3; enter("serve", 1); say("Arahkan servis ke lapangan lawan. Tekan Servis atau Spasi untuk mengayun.");
   }
   function action(act) {
     if (!running || paused) return;
@@ -69,6 +69,7 @@ window.VOLI_SIMULATION = function ({ state, progressOf, save, toast }) {
     const active = {receive:0,set:1,attack:2}[phase];
     if (active !== undefined) players[active].pose = .6;
     if (phase === "charge" || phase === "attack") {
+      if (phase === "charge") { players[0].tx = homes[0][0]; players[0].ty = homes[0][1]; players[0].pose = .6; }
       rally++; enter("away", phase === "charge" ? 1.65 : 1.1, {x:aim.x,y:aim.y,z:.15}, phase === "charge" ? 3.7 : 3);
       say(q > .8 ? "Timing sempurna! Bola menuju sasaran." : "Bola masuk. Cari ruang kosong untuk serangan berikutnya.");
     } else if (phase === "receive") {
@@ -152,7 +153,7 @@ window.VOLI_SIMULATION = function ({ state, progressOf, save, toast }) {
         const nearest=Math.min(...players.filter(p=>p.team).map(p=>Math.hypot(p.x-ball.x,p.y-ball.y)));
         if(nearest>level.reach*quality+.25) point(true,"Penempatan tajam ke ruang kosong; lawan tidak menjangkau bola.");
         else {players.slice(3).forEach(p=>{if(Math.hypot(p.x-ball.x,p.y-ball.y)<2.5)p.pose=.6;});enter("receive",2.1,{x:-2.6+Math.sin(rally*1.7)*.6,y:4,z:.9},3.8);say("Lawan mengembalikan bola. Bersiap menerima: tombol 1 di zona hijau.");}
-      } else if(phase==="point") {quality=1;ball={x:-2,y:6,z:1};trail=[];enter("serve",1);say("Rally baru. Mulai ayunan servis dengan Spasi atau tombol Servis.");}
+      } else if(phase==="point") {quality=1;ball={x:-2,y:10.3,z:1};players[0].x=players[0].tx=-2;players[0].y=players[0].ty=10.3;trail=[];enter("serve",1);say("Rally baru. Mulai ayunan servis dengan Spasi atau tombol Servis.");}
     }
     ui("clock").textContent=mode==="challenge"?`${Math.ceil(remaining)} detik · Rally ${rally}`:mode==="match"?"Pertama mencapai 7 poin":`Latihan bebas · Rally ${rally}`;
   }

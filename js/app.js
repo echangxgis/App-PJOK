@@ -406,7 +406,22 @@
 
   // Simulation
   views.simulation = function(){
-    return window.VOLI_SIMULATION({ state, progressOf, save, toast });
+    const root = document.createElement("section");
+    root.innerHTML = `<div class="vo-modes" role="group" aria-label="Pilih jenis simulasi"><button class="btn btn-primary" data-mode="observe" aria-pressed="true">Amati Gerakan</button><button class="btn btn-outline" data-mode="timing" aria-pressed="false">Latihan Timing</button></div><div class="vo-content"></div>`;
+    const content = root.querySelector(".vo-content");
+    let selected = "observe";
+    content.appendChild(window.VOLI_OBSERVATION());
+    root.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => {
+      if (selected === button.dataset.mode) return;
+      selected = button.dataset.mode;
+      root.querySelectorAll("[data-mode]").forEach(b => {
+        const active = b === button;
+        b.setAttribute("aria-pressed", String(active));
+        b.className = active ? "btn btn-primary" : "btn btn-outline";
+      });
+      content.replaceChildren(selected === "observe" ? window.VOLI_OBSERVATION() : window.VOLI_SIMULATION({ state, progressOf, save, toast }));
+    }));
+    return root;
   };
 
   // Missions
