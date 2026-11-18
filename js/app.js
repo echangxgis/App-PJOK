@@ -129,6 +129,10 @@
   views.home = function(){
     const div = document.createElement("div");
     div.innerHTML = `
+      <div class="school-identity">
+        <img src="assets/logo-kalam-kudus.png" alt="Logo Kalam Kudus" width="100" height="96" fetchpriority="high">
+        <div><strong>Sekolah Kristen Kalam Kudus Sentani</strong><p>Media Pembelajaran PJOK · Bola Voli</p></div>
+      </div>
       <div class="hero">
         <div class="hero-art">🏐</div>
         <h1>VOLI Cerdas</h1>
