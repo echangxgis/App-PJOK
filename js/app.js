@@ -416,19 +416,23 @@
   // Gallery teknik
   views.gallery = function(){
     const div = document.createElement("div");
-    div.innerHTML = `<h2 class="section-title">Galeri Teknik Dasar</h2><p class="subtle">Ilustrasi langkah teknik. (Demo visual)</p><div class="grid grid-3 mt-12" id="gGrid"></div>`;
+    div.innerHTML = `<h2 class="section-title">Galeri Teknik Dasar</h2><p class="subtle">Pelajari langkah gerak dari materi Bola Voli Mini Kelas 4. Pilih gambar untuk melihat ukuran penuh.</p><div class="grid grid-2 mt-12" id="gGrid"></div>`;
     const g = div.querySelector("#gGrid");
     const techs = [
-      {name:"Sikap Siap", art:"🧍", steps:["Kaki selebar bahu","Lutut menekuk","Tangan siap"]},
-      {name:"Passing Bawah", art:"🤲", steps:["Genggam tangan","Lengan lurus","Bola mengenai lengan bawah"]},
-      {name:"Passing Atas", art:"🙌", steps:["Mangkuk di dahi","Jari terbuka","Dorong lembut"]},
-      {name:"Servis Bawah", art:"✋", steps:["Tahan bola","Ayunkan dari bawah","Pukul bola"]},
+      {name:"Sikap Siap", image:"sikap-siap", steps:["Buka kaki selebar bahu.","Tekuk lutut dan condongkan badan sedikit ke depan.","Siapkan tangan di depan badan dan lihat bola.","Ikuti arah bola, lalu berhenti dengan seimbang."]},
+      {name:"Passing Bawah", image:"passing-bawah", steps:["Ambil sikap siap dan dekati bola.","Satukan tangan.","Rapatkan dan luruskan kedua lengan.","Arahkan lengan ke sasaran dan sentuh bola dengan lengan bawah.","Luruskan lutut secukupnya untuk membantu dorongan.","Kembali ke sikap siap."]},
+      {name:"Passing Atas", image:"passing-atas", steps:["Bergerak ke bawah bola dan tekuk lutut sedikit.","Angkat tangan ke atas depan dahi dan renggangkan jari.","Sentuh bola dengan jari kedua tangan.","Dorong bola ke sasaran dengan bantuan tangan dan kaki, lalu kembali siap."]},
+      {name:"Servis Bawah", image:"servis-bawah", steps:["Berdiri di garis servis dengan kaki yang berlawanan dengan tangan pemukul di depan.","Pegang bola di depan badan setinggi pinggang.","Ayunkan tangan pemukul ke belakang dan lepaskan bola sedikit.","Ayunkan tangan ke depan dan pukul bagian bawah-belakang bola.","Lanjutkan ayunan ke sasaran, lalu kembali ke posisi siap."]},
       {name:"Mengumpan", art:"🎯", steps:["Terima bola","Lihat teman","Umpan akurat"]},
       {name:"Blocking", art:"🛡️", steps:["Dekat net","Lompat","Tangan terangkat"]}
     ];
     techs.forEach(t=>{
       const c = document.createElement("div"); c.className="card text-center";
-      c.innerHTML = `<div style="font-size:48px">${t.art}</div><h3>${t.name}</h3><ol style="text-align:left">${t.steps.map(s=>`<li>${s}</li>`).join("")}</ol>`;
+      const src = t.image && `assets/teknik/${t.image}.jpg`;
+      const visual = src
+        ? `<a href="${src}" target="_blank" rel="noopener" aria-label="Lihat ilustrasi ${t.name} ukuran penuh (tab baru)"><img src="${src}" alt="Ilustrasi langkah ${t.name}" width="1501" height="845" loading="lazy" style="display:block;width:100%;height:auto;border-radius:8px"></a>`
+        : `<div style="font-size:48px" aria-hidden="true">${t.art}</div>`;
+      c.innerHTML = `<h3>${t.name}</h3>${visual}<ol style="text-align:left">${t.steps.map(s=>`<li>${s}</li>`).join("")}</ol>`;
       g.appendChild(c);
     });
     return div;
