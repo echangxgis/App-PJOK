@@ -105,7 +105,7 @@ Build hanya menyalin halaman, aset, dan dokumen publik ke `dist/`; skrip PowerSh
 
 Untuk memeriksa build lokal, instal Node.js 22 atau lebih baru lalu jalankan `npm run build`. Tidak ada dependensi npm tambahan.
 
-**Penting:** deployment Vercel tidak menambahkan database atau autentikasi produksi. Data tetap di localStorage per browser/per domain. Data lokal pada alamat lama tidak otomatis berpindah ke domain Vercel. Semua dokumen dalam `dokumen/` dapat diakses publik, termasuk kunci jawaban; jangan unggah data murid atau materi rahasia.
+**Penting:** deployment Vercel tidak menyiapkan database atau autentikasi; lihat pengaturan Supabase di bawah. Data lokal pada alamat lama tidak otomatis berpindah ke domain Vercel. Semua dokumen dalam `dokumen/` dapat diakses publik, termasuk kunci jawaban; jangan unggah data murid atau materi rahasia.
 
 ### Login Murid dan Catatan Masuk (Supabase)
 
@@ -115,7 +115,11 @@ Untuk memeriksa build lokal, instal Node.js 22 atau lebih baru lalu jalankan `np
    `insert into public.pjok_teachers(user_id) select id from auth.users where email = 'email-guru@sekolah.sch.id';`
 4. Murid masuk dengan memilih kelas dan nama. Guru melihat riwayat melalui **Dashboard Guru → Lihat Catatan Masuk Murid**.
 
-Batasan: tanpa PIN, murid dapat memilih nama temannya, sehingga catatan ini bukan bukti kehadiran terverifikasi. Daftar nama dapat dilihat siapa pun yang membuka halaman login. Progres belajar dan nilai masih tersimpan di localStorage.
+Untuk mengaktifkan progres materi, jalankan migrasi terpisah `supabase/progress.sql` setelah `supabase/schema.sql` (jika skema dasar sudah ada, cukup jalankan migrasi). Dasbor guru menampilkan jumlah materi selesai sesuai tingkat kelas pada daftar murid sekolah. Supabase hanya menyimpan pasangan ID murid dan ID materi selesai; laporan baru menambah tanda selesai tanpa menghapus laporan lama. Progres cloud hanya dapat dibaca oleh akun guru terdaftar. Nilai, refleksi, dan data belajar lainnya tetap di browser; tampilan murid tidak mengambil progres dari server.
+
+Progres lama untuk ID murid Supabase yang sama dikirim saat masuk kembali atau saat halaman memulihkan sesi murid dari browser, profil, dan alamat situs yang sama. Menandai materi juga mencoba mengirim ulang progres lokal. Data demo, data untuk ID berbeda, dan data dari domain lain tidak dipindahkan. Sinkronisasi tidak menghapus progres lokal.
+
+Batasan: tanpa PIN, siapa pun yang dapat memilih nama murid dapat melaporkan progres atas nama murid tersebut. Catatan masuk dan tanda selesai bukan bukti terverifikasi dan tidak boleh digunakan sebagai nilai resmi. Daftar nama tetap terlihat oleh pengunjung halaman login.
 
 ### Mode Pengguna
 
@@ -170,7 +174,7 @@ Menerapkan strategi gerak sederhana dan memecahkan masalah gerak; menerapkan per
 
 ## Batasan aplikasi dan keamanan
 
-Aplikasi ini merupakan prototipe pembelajaran. Progres tersimpan di `localStorage` browser, bukan basis data bersama. Login dan kata sandi guru bersifat demo, bukan pengamanan data. Jangan gunakan untuk data pribadi atau nilai resmi murid pada hosting publik. Simulasi layar tidak menggantikan penilaian gerak nyata oleh guru. Pengujian fungsi web menyeluruh belum dilakukan dalam penyiapan paket ini.
+Aplikasi ini merupakan prototipe pembelajaran. Data belajar tersimpan di `localStorage` browser, kecuali catatan masuk dan tanda selesai materi yang dilaporkan ke Supabase. Login guru Supabase membatasi pembacaan progres cloud, tetapi login murid tanpa PIN tidak memverifikasi identitas. Jangan gunakan untuk data pribadi atau nilai resmi murid pada hosting publik. Simulasi layar tidak menggantikan penilaian gerak nyata oleh guru. Pengujian fungsi web menyeluruh belum dilakukan dalam penyiapan paket ini.
 
 ## Hak penggunaan
 

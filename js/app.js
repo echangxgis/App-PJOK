@@ -41,6 +41,23 @@
     return state.data.progress[sid];
   }
 
+  const materialIds = new Set(D.materials.map(m=>m.id));
+  async function syncCompletedMaterials(){
+    if(state.role!=='student' || !state.user) return;
+    const user = state.user;
+    if(!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(user.id) ||
+       !state.data.students.some(s=>s.id===user.id)) return;
+    const completed = progressOf(user.id).completed;
+    const ids = [...new Set((Array.isArray(completed) ? completed : []).filter(id=>materialIds.has(id)))];
+    if(!ids.length) return;
+    try{
+      const {error} = await window.PJOK_CLOUD.rpc('pjok_merge_material_progress', {p_student_id:user.id, p_completed:ids});
+      if(error) throw error;
+    }catch(e){
+      if(state.role==='student' && state.user===user) toast('Progres tetap tersimpan di browser. Sinkronisasi akan dicoba lagi saat masuk atau menandai materi.');
+    }
+  }
+
   // ---------- Utilities ----------
   function el(html){ const d=document.createElement("div"); d.innerHTML=html.trim(); return d.firstChild; }
   function $(sel, root){ return (root||document).querySelector(sel); }
@@ -150,7 +167,7 @@
       <div class="card mt-16">
         <h3 class="section-title">Cara Pakai</h3>
         <p class="subtle">Pilih peran murid atau guru. Murid dapat memilih kelas, belajar materi, bermain simulasi, mengerjakan kuis, dan melihat rapor. Guru dapat mengelola kelas, input nilai praktik, dan melihat laporan.</p>
-        <p class="subtle">Catatan masuk disimpan di Supabase. Progres belajar dan nilai masih lokal pada browser ini.</p>
+        <p class="subtle">Catatan masuk disimpan di Supabase. Guru dapat melihat materi yang ditandai selesai. Nilai dan refleksi tetap lokal pada browser ini.</p>
       </div>
     `;
     div.querySelector("#btnMulai").addEventListener("click", ()=>navigate("auth", {role:"student"}));
@@ -185,18 +202,26 @@
       cloud.rpc('pjok_roster').then(({data,error})=>{
         if(error){status.textContent='Daftar belum tersedia. Guru perlu menjalankan SQL pengaturan database.';return;}
         const roster=data||[], cls=form.querySelector('#class'), student=form.querySelector('#student'), button=form.querySelector('#login');
+        cls.add(new Option('Pilih kelas', ''));
         for(const name of [...new Set(roster.map(s=>s.class_name))]) cls.add(new Option(name,name));
-        function refresh(){student.replaceChildren();for(const s of roster.filter(s=>s.class_name===cls.value)) student.add(new Option(s.name,s.id));button.disabled=!student.value;}
+        function refresh(){
+          student.replaceChildren(new Option('Pilih nama sendiri', ''));
+          for(const s of roster.filter(s=>s.class_name===cls.value)) student.add(new Option(s.name,s.id));
+          student.disabled=!cls.value;
+          button.disabled=true;
+        }
+        student.onchange=()=>{button.disabled=!student.value;};
         cls.onchange=refresh;refresh();status.textContent=roster.length?'':'Daftar murid masih kosong. Hubungi guru.';
         button.onclick=async()=>{
-          button.disabled=true;status.textContent='Mencatat waktu masuk...';
+          button.disabled=true;cls.disabled=true;student.disabled=true;status.textContent='Mencatat waktu masuk...';
           try{
             const stu=roster.find(s=>s.id===student.value);if(!stu) throw new Error('Pilih nama dahulu.');
             const {error}=await cloud.rpc('pjok_enter',{p_student_id:stu.id});if(error) throw error;
             state.role='student';state.user={id:stu.id,name:stu.name,kelas:stu.grade};
             if(!state.data.students.some(s=>s.id===stu.id)) state.data.students.push(state.user);
-            progressOf(stu.id);navigate('studentHome');
-          }catch(e){status.textContent='Gagal mencatat masuk: '+e.message;button.disabled=false;}
+            progressOf(stu.id);save();navigate('studentHome');
+            void syncCompletedMaterials();
+          }catch(e){status.textContent='Gagal mencatat masuk: '+e.message;cls.disabled=false;student.disabled=false;button.disabled=false;}
         };
       }).catch(()=>{status.textContent='Tidak dapat menghubungi database. Periksa internet.';});
     }
@@ -381,6 +406,7 @@
         const p = progressOf(state.user.id);
         if(!p.completed.includes(mat.id)){ p.completed.push(mat.id); save(); toast("Materi ditandai selesai ✅"); }
         else toast("Sudah selesai sebelumnya");
+        void syncCompletedMaterials();
       } else toast("Masuk sebagai murid untuk menyimpan progres");
     });
     div.querySelector("#backMat").addEventListener("click", ()=>navigate("learnMap"));
@@ -760,21 +786,28 @@
   // Teacher dashboard
   views.entryHistory = function(){
     const div=document.createElement('div');
-    div.innerHTML='<div class="card"><h2>Catatan Masuk Aplikasi</h2><p>Bukan bukti kehadiran terverifikasi. Maksimal 500 catatan terbaru. Waktu mengikuti zona perangkat.</p><button class="btn" id="back">Kembali</button><button class="btn" id="logout">Keluar Guru</button><div id="entries" role="status">Memuat...</div></div>';
+    div.innerHTML='<div class="card"><h2>Catatan Masuk Aplikasi</h2><p>Bukan bukti kehadiran terverifikasi. Maksimal 500 catatan terbaru. Waktu mengikuti zona perangkat.</p><button class="btn" id="back">Kembali</button><button class="btn" id="refreshEntries">Muat Ulang Catatan</button><button class="btn" id="logout">Keluar Guru</button><div id="entries" role="status">Memuat...</div></div>';
     div.querySelector('#back').onclick=()=>navigate('teacher');
     div.querySelector('#logout').onclick=async()=>{await window.PJOK_CLOUD.auth.signOut();state.role=null;state.user=null;navigate('home');};
-    (async()=>{
+    const refreshButton=div.querySelector('#refreshEntries');
+    async function loadEntries(){
       const box=div.querySelector('#entries');
+      refreshButton.disabled=true;
+      box.textContent='Memuat catatan masuk...';
       try{
         const {data:teachers,error:te}=await window.PJOK_CLOUD.from('pjok_teachers').select('user_id');
-        if(te||!teachers.length) throw new Error('Silakan login sebagai guru.');
+        if(te) throw te;
+         if(!teachers?.length) throw new Error('Sesi guru tidak aktif. Silakan masuk kembali melalui Mode Guru.');
         const {data,error}=await window.PJOK_CLOUD.from('pjok_entries').select('entered_at,pjok_students(name,class_name)').order('entered_at',{ascending:false}).limit(500);
         if(error) throw error;
         box.textContent='';
         for(const entry of data){const row=document.createElement('p');row.textContent=`${entry.pjok_students?.class_name} - ${entry.pjok_students?.name} - ${new Date(entry.entered_at).toLocaleString('id-ID')}`;box.appendChild(row);}
         if(!data.length) box.textContent='Belum ada catatan masuk.';
-      }catch(e){box.textContent=e.message;}
-    })();
+      }catch(e){box.textContent=`Catatan gagal dimuat: ${e.message}`;}
+      finally{refreshButton.disabled=false;}
+    }
+    refreshButton.onclick=loadEntries;
+    loadEntries();
     return div;
   };
   views.teacher = function(){
@@ -784,7 +817,16 @@
     const data = state.data;
     div.innerHTML = `
       <h2 class="section-title">Dashboard Guru</h2>
-      <button class="btn btn-primary" id="entryHistory">Lihat Catatan Masuk Murid</button>
+      <div class="card">
+        <h3>Daftar Murid Sekolah dan Catatan Masuk</h3>
+        <p class="subtle">Daftar dari Supabase. Catatan masuk bukan bukti kehadiran terverifikasi. Tanda selesai digabungkan dari perangkat murid. Tanpa PIN, progres bukan bukti belajar terverifikasi.</p>
+        <div class="flex flex-wrap gap-8">
+          <button class="btn btn-primary" id="entryHistory">Lihat Catatan Masuk Murid</button>
+          <button class="btn btn-outline" id="refreshCloudRoster">Muat Ulang Daftar</button>
+        </div>
+        <div id="cloudRosterStatus" role="status"></div>
+        <details><summary>Tampilkan daftar murid sekolah dan progres materi</summary><div id="cloudRosterList"></div></details>
+      </div>
       <div class="card">
         <h3>Pengaturan Bobot Nilai & Ketuntasan</h3>
         <div class="grid grid-4">
@@ -798,8 +840,8 @@
       </div>
 
       <div class="card mt-12">
-        <h3>Daftar Murid</h3>
-        <p class="subtle">Data contoh ditandai sebagai data demo. Ganti dengan data sekolah Anda.</p>
+        <h3>Daftar Murid Lokal dan Data Demo</h3>
+        <p class="subtle">Tabel ini hanya berisi data di browser ini, bukan daftar login sekolah. Gunakan bagian Supabase di atas untuk melihat daftar sekolah dan catatan masuk.</p>
         <table class="table" id="studentTable"></table>
         <div class="mt-8 flex gap-8">
           <button class="btn btn-secondary btn-sm" id="addStudent">Tambah Murid</button>
@@ -936,6 +978,40 @@
     }
 
     div.querySelector("#entryHistory").addEventListener("click", ()=>navigate("entryHistory"));
+    const rosterButton = div.querySelector('#refreshCloudRoster');
+    const rosterStatus = div.querySelector('#cloudRosterStatus');
+    const rosterList = div.querySelector('#cloudRosterList');
+    async function loadSchoolRoster(){
+      rosterButton.disabled = true;
+      rosterList.replaceChildren();
+      rosterStatus.textContent = 'Memuat daftar murid sekolah...';
+      try{
+        const cloud = window.PJOK_CLOUD;
+        if(!cloud) throw new Error('Koneksi database belum tersedia.');
+        const {data:teachers,error:teacherError} = await cloud.from('pjok_teachers').select('user_id');
+        if(teacherError) throw teacherError;
+        if(!teachers?.length) throw new Error('Sesi guru tidak aktif. Silakan masuk kembali melalui Mode Guru.');
+        const {data:students,error} = await cloud.from('pjok_students').select('name,class_name,grade,pjok_material_progress(material_id)').order('class_name').order('name');
+        if(error) throw error;
+        const list = document.createElement('ul');
+        for(const student of students){
+          const item = document.createElement('li');
+          const materials = D.materials.filter(m=>m.kelas.includes(student.grade));
+          const completed = new Set(student.pjok_material_progress.map(p=>p.material_id));
+          const count = materials.filter(m=>completed.has(m.id)).length;
+          item.textContent = `${student.class_name} — ${student.name}: ${count}/${materials.length} materi selesai`;
+          list.appendChild(item);
+        }
+        rosterList.appendChild(list);
+        rosterStatus.textContent = students.length ? `${students.length} murid terdaftar di Supabase.` : 'Belum ada murid terdaftar di Supabase.';
+      }catch(e){
+        rosterStatus.textContent = `Daftar gagal dimuat: ${e.message}`;
+      }finally{
+        rosterButton.disabled = false;
+      }
+    }
+    rosterButton.onclick = loadSchoolRoster;
+    loadSchoolRoster();
     div.querySelector("#saveW").addEventListener("click", ()=>{
       data.teacher.weights = {
         pengetahuan: parseInt(div.querySelector("#w1").value)||0,
@@ -1032,5 +1108,6 @@
   window.VOLI_APP = { state, progressOf, save };
 
   navigate("home");
+  void syncCompletedMaterials();
 })();
 
