@@ -819,6 +819,15 @@
     const div = document.createElement("div");
     if(state.role!=="teacher"){ div.innerHTML="<p>Akses khusus guru. <button class='btn btn-primary btn-sm' id='g'>Masuk Guru</button></p>"; div.querySelector("#g").addEventListener("click",()=>navigate("auth",{role:"teacher"})); return div; }
     const data = state.data;
+    const materialOrder = ["pengenalan","lapangan","aturan","teknik-siap","passing-bawah","passing-atas","servis-bawah","servis-atas","mengumpan","serangan","komunikasi","taktik","keselamatan","sportivitas"];
+    const materialLabel = {
+      pengenalan:"Mengenal Voli",lapangan:"Lapangan",aturan:"Aturan","teknik-siap":"Sikap Siap",
+      "passing-bawah":"Passing Bawah","passing-atas":"Passing Atas","servis-bawah":"Servis Bawah",
+      "servis-atas":"Servis Atas",mengumpan:"Mengumpan",serangan:"Serangan",komunikasi:"Komunikasi",
+      taktik:"Taktik",keselamatan:"Keselamatan",sportivitas:"Sportivitas"
+    };
+    const allMats = D.materials.reduce((m,x)=>{m[x.id]=x;return m;},{});
+    let studentsCloud = [];
     div.innerHTML = `
       <h2 class="section-title">Dashboard Guru</h2>
       <div class="card">
@@ -829,7 +838,12 @@
           <button class="btn btn-outline" id="refreshCloudRoster">Muat Ulang Daftar</button>
         </div>
         <div id="cloudRosterStatus" role="status"></div>
-        <details><summary>Tampilkan daftar murid sekolah dan progres materi</summary><div id="cloudRosterList"></div></details>
+        <details><summary>Tampilkan progres materi per murid (detail)</summary>
+          <div class="flex flex-wrap gap-8 mt-8">
+            <button class="btn btn-accent btn-sm" id="exportExcelRoster">Ekspor ke Excel (.xlsx)</button>
+          </div>
+          <div id="cloudRosterList" style="overflow-x:auto;"></div>
+        </details>
       </div>
       <div class="card">
         <h3>Pengaturan Bobot Nilai & Ketuntasan</h3>
@@ -995,19 +1009,46 @@
         const {data:teachers,error:teacherError} = await cloud.from('pjok_teachers').select('user_id');
         if(teacherError) throw teacherError;
         if(!teachers?.length) throw new Error('Sesi guru tidak aktif. Silakan masuk kembali melalui Mode Guru.');
-        const {data:students,error} = await cloud.from('pjok_students').select('name,class_name,grade,pjok_material_progress(material_id)').order('class_name').order('name');
+        const {data:students,error} = await cloud.from('pjok_students').select('id,name,class_name,grade,pjok_material_progress(material_id)').order('class_name').order('name');
+        studentsCloud = students || [];
         if(error) throw error;
-        const list = document.createElement('ul');
+        rosterList.replaceChildren();
+        if(!students.length){ rosterList.textContent='Belum ada murid terdaftar di Supabase.'; rosterStatus.textContent='Belum ada murid terdaftar di Supabase.'; return; }
+        const table = document.createElement('table');
+        table.className='table';
+        table.style.fontSize='13px';
+        const thead = document.createElement('thead');
+        const hrow = document.createElement('tr');
+        hrow.innerHTML='<th style="position:sticky;left:0;background:#fff;z-index:2;">Nama</th><th style="position:sticky;left:150px;background:#fff;z-index:2;">Kelas</th>';
+        materialOrder.forEach(id=>{ hrow.innerHTML+=`<th title="${allMats[id].judul}">${materialLabel[id]}</th>`; });
+        hrow.innerHTML+='<th style="position:sticky;right:0;background:#fff;z-index:2;">Selesai</th>';
+        thead.appendChild(hrow);
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
         for(const student of students){
-          const item = document.createElement('li');
-          const materials = D.materials.filter(m=>m.kelas.includes(student.grade));
-          const completed = new Set(student.pjok_material_progress.map(p=>p.material_id));
-          const count = materials.filter(m=>completed.has(m.id)).length;
-          item.textContent = `${student.class_name} — ${student.name}: ${count}/${materials.length} materi selesai`;
-          list.appendChild(item);
+          const completed = new Set((student.pjok_material_progress||[]).map(p=>p.material_id));
+          const mats = D.materials.filter(m=>m.kelas.includes(student.grade));
+          const done = mats.filter(m=>completed.has(m.id)).length;
+          const tr = document.createElement('tr');
+          tr.innerHTML=`<td style="font-weight:700;position:sticky;left:0;background:#fff;z-index:1;">${student.name}</td><td style="position:sticky;left:150px;background:#fff;z-index:1;">${student.class_name}</td>`;
+          materialOrder.forEach(id=>{
+            const inGrade = mats.some(m=>m.id===id);
+            const ok = completed.has(id);
+            let cell = '—';
+            if(inGrade){
+              cell = ok ? '<span style="color:#166534;font-weight:700;">✓ Selesai</span>' : '<span style="color:#6b7280;">Belum</span>';
+            }
+            tr.innerHTML+=`<td style="text-align:center;${inGrade?'': 'color:#9ca3af;'}" data-detail="${student.id}|${id}">${cell}</td>`;
+          });
+          tr.innerHTML+=`<td style="font-weight:700;color:#115e59;">${done}/${mats.length}</td>`;
+          tr.style.cursor='pointer';
+          tr.title=`Klik untuk detail progres ${student.name}`;
+          tr.addEventListener('click',()=>showStudentProgresDetail(student.id, students, allMats, materialOrder, materialLabel));
+          tbody.appendChild(tr);
         }
-        rosterList.appendChild(list);
-        rosterStatus.textContent = students.length ? `${students.length} murid terdaftar di Supabase.` : 'Belum ada murid terdaftar di Supabase.';
+        table.appendChild(tbody);
+        rosterList.appendChild(table);
+        rosterStatus.textContent = `${students.length} murid terdaftar di Supabase.`;
       }catch(e){
         rosterStatus.textContent = `Daftar gagal dimuat: ${e.message}`;
       }finally{
@@ -1016,6 +1057,20 @@
     }
     rosterButton.onclick = loadSchoolRoster;
     loadSchoolRoster();
+    div.querySelector("#exportExcelRoster").addEventListener("click", ()=>{
+      const cloud = window.PJOK_CLOUD;
+      if(!cloud){ toast('Koneksi database belum tersedia.'); return; }
+      (async()=>{
+        try{
+          const {data:teachers,error:te}=await cloud.from('pjok_teachers').select('user_id');
+          if(te||!teachers?.length){ toast('Sesi guru tidak aktif.'); return; }
+          const {data:students,error}=await cloud.from('pjok_students').select('id,name,class_name,grade,pjok_material_progress(material_id)').order('class_name').order('name');
+          if(error) throw error;
+          exportProgresExcel(students, allMats, materialOrder, materialLabel);
+          toast('Diekspor ke progres_voli_cerdas_detail.xlsx');
+        }catch(e){ toast('Gagal mengekspor: '+e.message); }
+      })();
+    });
     div.querySelector("#saveW").addEventListener("click", ()=>{
       data.teacher.weights = {
         pengetahuan: parseInt(div.querySelector("#w1").value)||0,
@@ -1050,7 +1105,59 @@
       toast("CSV diekspor");
     });
 
-    // Rekap kelas
+    // Detail progres per murid (modal)
+    function showStudentProgresDetail(sid){
+      const student = studentsCloud.find(x=>x.id===sid);
+      if(!student) return;
+      const completed = new Set((student.pjok_material_progress||[]).map(p=>p.material_id));
+      const mats = D.materials.filter(m=>m.kelas.includes(student.grade));
+      const done = mats.filter(m=>completed.has(m.id)).length;
+      let html = `<h3>Detail Progres: ${student.name} (${student.class_name})</h3>
+      <p class="subtle">${done}/${mats.length} materi selesai.</p>
+      <table class="table" style="font-size:13px;">
+        <thead><tr><th>Kategori</th><th>Materi</th><th>Status</th><th>Indikator</th></tr></thead>
+        <tbody>`;
+      mats.forEach(m=>{
+        const ok = completed.has(m.id);
+        html += `<tr>
+          <td>${m.kategori}</td>
+          <td><strong>${m.judul}</strong></td>
+          <td><span style="${ok?'color:#166534;font-weight:700;':'color:#6b7280;'}">${ok?'✓ Selesai':'Belum selesai'}</span></td>
+          <td class="subtle">${m.indikator||'-'}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>
+      <div class="mt-8 flex gap-8">
+        <button class="btn btn-ghost btn-sm" id="btnCloseDetail">Tutup</button>
+      </div>`;
+      showModal(html);
+      setTimeout(()=>{
+        const b = document.getElementById('btnCloseDetail');
+        if(b) b.addEventListener('click', closeModal);
+      }, 0);
+    }
+
+    function exportProgresExcel(){
+      const wsData = [["Nama","Kelas","Materi","Kategori","Status"]];
+      for(const student of studentsCloud){
+        const completed = new Set((student.pjok_material_progress||[]).map(p=>p.material_id));
+        const mats = D.materials.filter(m=>m.kelas.includes(student.grade));
+        for(const m of mats){
+          wsData.push([student.name, student.class_name, m.judul, m.kategori, completed.has(m.id)?"Selesai":"Belum"]);
+        }
+      }
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for(let C=0; C<=range.e.c; C++){
+        const cell = ws[XLSX.utils.encode_cell({r:0,c:C})];
+        if(cell) cell.s = {font:{bold:true,color:{rgb:"FFFFFF"}},fill:{fgColor:"146DC5",patternType:"solid"}};
+      }
+      XLSX.utils.book_append_sheet(wb, ws, "Progres Detail");
+      XLSX.writeFile(wb, "progres_voli_cerdas_detail.xlsx");
+    }
+
+    // renderRekap uses local students; keep as-is
     function renderRekap(){
       const area = div.querySelector("#rekapArea");
       const byKelas = {};
