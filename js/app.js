@@ -58,6 +58,27 @@
     }
   }
 
+  async function syncAssessment(sid, category, item_id, score, total, notes){
+    if(state.role!=='student' || !state.user) return;
+    const user = state.user;
+    if(user.id !== sid) return;
+    if(!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(user.id)) return;
+    if(!state.data.students.some(s=>s.id===user.id)) return;
+    try{
+      const {error} = await window.PJOK_CLOUD.rpc('pjok_merge_assessment_score', {
+        p_student_id: user.id,
+        p_category: category,
+        p_item_id: item_id,
+        p_score: score,
+        p_total: total,
+        p_notes: notes||null
+      });
+      if(error) throw error;
+    }catch(e){
+      if(state.role==='student' && state.user===user) toast('Asesmen tetap tersimpan di browser. Sinkronisasi ke sekolah akan dicoba lagi.');
+    }
+  }
+
   // ---------- Utilities ----------
   function el(html){ const d=document.createElement("div"); d.innerHTML=html.trim(); return d.firstChild; }
   function $(sel, root){ return (root||document).querySelector(sel); }
@@ -491,7 +512,7 @@
           const p = progressOf(state.user.id);
           if(!p.missions) p.missions={};
           p.missions[m.id]=true;
-          save(); closeModal(); toast("Lencana diperoleh: "+m.badge); navigate("missions");
+          save(); syncAssessment(state.user.id,'mission',m.id,1,1,'Misi: '+m.title); closeModal(); toast("Lencana diperoleh: "+m.badge); navigate("missions");
         });
         document.getElementById("mNo").addEventListener("click", closeModal);
       });
@@ -554,7 +575,7 @@
 
     div.querySelector("#qDiag").addEventListener("click", ()=>{
       runQuiz(D.quizBank.diagnostik, (sc,total)=>{
-        if(state.role==="student"&&state.user){ const p=progressOf(state.user.id); p.diagnostic={score:sc,total}; save(); toast("Diagnostik disimpan"); }
+        if(state.role==="student"&&state.user){ const p=progressOf(state.user.id); p.diagnostic={score:sc,total}; save(); syncAssessment(state.user.id,'diagnostic','diagnostik',sc,total,'Diagnostik awal'); toast("Diagnostik disimpan"); }
       });
     });
     div.querySelector("#qNoncog").addEventListener("click", ()=>{
@@ -573,7 +594,7 @@
         if(state.role==="student"&&state.user){
           const p=progressOf(state.user.id);
           p.noncog = { minat: area.querySelector("#nc1").value, pengalaman: area.querySelector("#nc2").value, percaya: area.querySelector("#nc3").value };
-          save(); toast("Disimpan. Terima kasih!");
+          save(); syncAssessment(state.user.id,'noncog','noncog',1,1,'Diagnostik nonkognitif'); toast("Disimpan. Terima kasih!");
         } else toast("Masuk sebagai murid");
       });
     });
@@ -586,7 +607,7 @@
       // pad to at least 5
       if(qs.length<5) qs.push(...D.quizBank.diagnostik.slice(0,5-qs.length));
       runQuiz(qs.slice(0,10), (sc,total)=>{
-        if(state.role==="student"&&state.user){ const p=progressOf(state.user.id); p.quiz.topic={score:sc,total}; save(); toast("Kuis disimpan"); }
+        if(state.role==="student"&&state.user){ const p=progressOf(state.user.id); p.quiz.topic={score:sc,total}; save(); syncAssessment(state.user.id,'quiz','topik',sc,total,'Kuis topik'); toast("Kuis disimpan"); }
       });
     });
 
@@ -698,7 +719,7 @@
           const pct = Math.round((score/order.length)*100);
           area.innerHTML = `<h3>Selesai! Skor: ${score}/${order.length} (${pct}%)</h3><button class="btn btn-primary btn-sm" id="sd">Tutup</button>`;
           document.getElementById("sd").addEventListener("click", ()=>{
-            if(state.role==="student"&&state.user){ const p=progressOf(state.user.id); p.summative={score, total:order.length}; save(); toast("Sumatif disimpan"); }
+            if(state.role==="student"&&state.user){ const p=progressOf(state.user.id); p.summative={score, total:order.length}; save(); syncAssessment(state.user.id,'summative','sumatif',score,order.length,'Tes pengetahuan akhir'); toast("Sumatif disimpan"); }
             area.innerHTML="";
           });
           return;
@@ -745,7 +766,7 @@
       if(state.role!=="student"||!state.user){ toast("Masuk sebagai murid"); return; }
       const p = progressOf(state.user.id);
       p.reflection = { r1:div.querySelector("#r1").value, r2:div.querySelector("#r2").value, r3:div.querySelector("#r3").value, r4:div.querySelector("#r4").value, date:new Date().toLocaleDateString("id-ID") };
-      save(); toast("Refleksi disimpan 💭");
+      save(); syncAssessment(state.user.id,'reflection','refleksi',1,1,'Refleksi karakter dan jurnal belajar'); toast("Refleksi disimpan 💭");
     });
     return div;
   };
@@ -942,6 +963,9 @@
           p2.practice[s.dataset.ind] = parseInt(s.value);
         });
         save();
+        area.querySelectorAll("select").forEach(s=>{
+          syncAssessment(sid,'practice',s.dataset.ind,p2.practice[s.dataset.ind],4,'Indikator praktik');
+        });
         // compute
         const res = computePractice(p2.practice);
         document.getElementById("practiceResult").innerHTML = `<p><strong>Nilai Praktik:</strong> ${res.toFixed(1)} / 100</p>`;
@@ -963,22 +987,42 @@
       return (sum/totalW)*100;
     }
 
-    function showStudentDetail(sid){
-      const s = data.students.find(x=>x.id===sid);
+    async function showStudentDetail(sid){
+      const s = data.students.find(x=>x.id===sid) || studentsCloud.find(x=>x.id===sid);
+      if(!s) return;
+      // Ambil asesmen dari Supabase (jika tersedia), fallback ke localStorage
+      let cloudScores = {};
+      try{
+        const cloud = window.PJOK_CLOUD;
+        if(cloud){
+          const {data:scores,error:se} = await cloud.rpc('pjok_get_assessment_scores',{p_student_id:sid});
+          if(!se && scores){
+            for(const sc of scores){
+              cloudScores[sc.category+'|'+sc.item_id] = {score:sc.score,total:sc.total,notes:sc.notes,updated_at:sc.updated_at};
+            }
+          }
+        }
+      }catch(e){}
       const p = progressOf(sid);
       const prac = p.practice||{};
       const practiceScore = Object.keys(prac).length? computePractice(prac) : 0;
-      const pengetahuan = p.summative? (p.summative.score/p.summative.total*100) : (p.diagnostic? p.diagnostic.score/p.diagnostic.total*100 : 0);
-      const penerapan = p.simScore? Math.min(100, p.simScore*10) : 0; // demo
-      const sikap = 80; // demo placeholder, guru should input real
+      const diag = cloudScores['diagnostic|diagnostik'] || p.diagnostic;
+      const sum = cloudScores['summative|sumatif'] || p.summative;
+      const quiz = cloudScores['quiz|topik'] || (p.quiz&&p.quiz.topic);
+      const pengetahuan = sum? (sum.score/sum.total*100) : (diag? diag.score/diag.total*100 : 0);
+      const penerapan = p.simScore? Math.min(100, p.simScore*10) : 0;
+      const sikap = 80;
       const w = data.teacher.weights;
       const final = (pengetahuan*w.pengetahuan + practiceScore*w.keterampilan + penerapan*w.penerapan + sikap*w.sikap)/100;
       const thr = data.teacher.threshold;
+      const dTxt = diag? `${diag.score}/${diag.total}` : "-";
+      const qTxt = quiz? `${quiz.score}/${quiz.total}` : "-";
+      const sTxt = sum? `${sum.score}/${sum.total}` : "-";
       showModal(`
-        <h3>Detail: ${s.name} (Kelas ${s.kelas})</h3>
-        <p>Diagnostik: ${p.diagnostic? p.diagnostic.score+"/"+p.diagnostic.total : "-"}</p>
-        <p>Kuis Topik: ${p.quiz&&p.quiz.topic? p.quiz.topic.score+"/"+p.quiz.topic.total : "-"}</p>
-        <p>Sumatif: ${p.summative? p.summative.score+"/"+p.summative.total : "-"}</p>
+        <h3>Detail: ${s.name} (${s.class_name||'Kelas '+s.kelas})</h3>
+        <p>Diagnostik: ${dTxt}</p>
+        <p>Kuis Topik: ${qTxt}</p>
+        <p>Sumatif: ${sTxt}</p>
         <p>Nilai Praktik: ${practiceScore.toFixed(1)}</p>
         <p>Penerapan (simulasi): ${penerapan}</p>
         <p>Sikap (demo): ${sikap}</p>
@@ -1066,7 +1110,7 @@
           if(te||!teachers?.length){ toast('Sesi guru tidak aktif.'); return; }
           const {data:students,error}=await cloud.from('pjok_students').select('id,name,class_name,grade,pjok_material_progress(material_id)').order('class_name').order('name');
           if(error) throw error;
-          exportProgresExcel(students, allMats, materialOrder, materialLabel);
+          await exportProgresExcel();
           toast('Diekspor ke progres_voli_cerdas_detail.xlsx');
         }catch(e){ toast('Gagal mengekspor: '+e.message); }
       })();
@@ -1106,9 +1150,22 @@
     });
 
     // Detail progres per murid (modal)
-    function showStudentProgresDetail(sid){
+    async function showStudentProgresDetail(sid){
       const student = studentsCloud.find(x=>x.id===sid);
       if(!student) return;
+      // Ambil asesmen dari Supabase
+      let cloudScores = {};
+      try{
+        const cloud = window.PJOK_CLOUD;
+        if(cloud){
+          const {data:scores,error:se} = await cloud.rpc('pjok_get_assessment_scores',{p_student_id:sid});
+          if(!se && scores){
+            for(const sc of scores){
+              cloudScores[sc.item_id] = {score:sc.score,total:sc.total,category:sc.category,updated_at:sc.updated_at};
+            }
+          }
+        }
+      }catch(e){}
       const completed = new Set((student.pjok_material_progress||[]).map(p=>p.material_id));
       const mats = D.materials.filter(m=>m.kelas.includes(student.grade));
       const done = mats.filter(m=>completed.has(m.id)).length;
@@ -1126,6 +1183,17 @@
           <td class="subtle">${m.indikator||'-'}</td>
         </tr>`;
       });
+      // Detail asesmen
+      html += `<thead><tr><th colspan="4">Asesmen</th></tr></thead><tbody>`;
+      const asmRows = [
+        {label:'Diagnostik', key:'diagnostik', cat:'diagnostic'},
+        {label:'Kuis Topik', key:'topik', cat:'quiz'},
+        {label:'Sumatif', key:'sumatif', cat:'summative'}
+      ];
+      for(const a of asmRows){
+        const sc = cloudScores[a.key];
+        html += `<tr><td>${a.label}</td><td>${sc? sc.score+'/'+sc.total : '-'}</td><td colspan="2" class="subtle">${sc? ('Diupdate '+new Date(sc.updated_at).toLocaleDateString('id-ID')) : 'Belum ada data'}</td></tr>`;
+      }
       html += `</tbody></table>
       <div class="mt-8 flex gap-8">
         <button class="btn btn-ghost btn-sm" id="btnCloseDetail">Tutup</button>
@@ -1137,7 +1205,7 @@
       }, 0);
     }
 
-    function exportProgresExcel(){
+    async function exportProgresExcel(){
       const wsData = [["Nama","Kelas","Materi","Kategori","Status"]];
       for(const student of studentsCloud){
         const completed = new Set((student.pjok_material_progress||[]).map(p=>p.material_id));
@@ -1145,6 +1213,22 @@
         for(const m of mats){
           wsData.push([student.name, student.class_name, m.judul, m.kategori, completed.has(m.id)?"Selesai":"Belum"]);
         }
+      }
+      // Tambahkan baris asesmen
+      wsData.push(["","","","",""]);
+      wsData.push(["Nama","Kelas","Asesmen","Skor","Total"]);
+      for(const student of studentsCloud){
+        try{
+          const cloud = window.PJOK_CLOUD;
+          let scores = [];
+          if(cloud){
+            const {data:sc,error:se} = await cloud.rpc('pjok_get_assessment_scores',{p_student_id:student.id});
+            if(!se && sc) scores = sc;
+          }
+          for(const sc of scores){
+            wsData.push([student.name, student.class_name, sc.item_id+' ('+sc.category+')', sc.score, sc.total]);
+          }
+        }catch(e){}
       }
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(wsData);
