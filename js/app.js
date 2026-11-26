@@ -58,6 +58,38 @@
     }
   }
 
+  // Sinkronkan SEMUA asesmen lama dari localStorage ke Supabase saat murid login kembali.
+  async function syncAllProgress(){
+    if(state.role!=='student' || !state.user) return;
+    const user = state.user;
+    if(!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(user.id)) return;
+    if(!state.data.students.some(s=>s.id===user.id)) return;
+    const p = progressOf(user.id);
+    const tasks = [];
+    if(p.diagnostic) tasks.push(window.PJOK_CLOUD.rpc('pjok_merge_assessment_score',{p_student_id:user.id,p_category:'diagnostic',p_item_id:'diagnostik',p_score:p.diagnostic.score,p_total:p.diagnostic.total,p_notes:'Migrasi data lama'}));
+    if(p.summative) tasks.push(window.PJOK_CLOUD.rpc('pjok_merge_assessment_score',{p_student_id:user.id,p_category:'summative',p_item_id:'sumatif',p_score:p.summative.score,p_total:p.summative.total,p_notes:'Migrasi data lama'}));
+    if(p.quiz && p.quiz.topic) tasks.push(window.PJOK_CLOUD.rpc('pjok_merge_assessment_score',{p_student_id:user.id,p_category:'quiz',p_item_id:'topik',p_score:p.quiz.topic.score,p_total:p.quiz.topic.total,p_notes:'Migrasi data lama'}));
+    if(p.reflection) tasks.push(window.PJOK_CLOUD.rpc('pjok_merge_assessment_score',{p_student_id:user.id,p_category:'reflection',p_item_id:'refleksi',p_score:1,p_total:1,p_notes:'Migrasi data lama'}));
+    if(p.noncog) tasks.push(window.PJOK_CLOUD.rpc('pjok_merge_assessment_score',{p_student_id:user.id,p_category:'noncog',p_item_id:'noncog',p_score:1,p_total:1,p_notes:'Migrasi data lama'}));
+    if(p.missions){
+      for(const mid of Object.keys(p.missions)){
+        tasks.push(window.PJOK_CLOUD.rpc('pjok_merge_assessment_score',{p_student_id:user.id,p_category:'mission',p_item_id:mid,p_score:1,p_total:1,p_notes:'Migrasi data lama'}));
+      }
+    }
+    if(p.practice){
+      for(const ind of Object.keys(p.practice)){
+        tasks.push(window.PJOK_CLOUD.rpc('pjok_merge_assessment_score',{p_student_id:user.id,p_category:'practice',p_item_id:ind,p_score:p.practice[ind],p_total:4,p_notes:'Migrasi data lama'}));
+      }
+    }
+    if(tasks.length){
+      try{
+        await Promise.all(tasks);
+      }catch(e){
+        if(state.role==='student' && state.user===user) toast('Sebagian data lama belum tersinkron ke sekolah.');
+      }
+    }
+  }
+
   async function syncAssessment(sid, category, item_id, score, total, notes){
     if(state.role!=='student' || !state.user) return;
     const user = state.user;
@@ -242,6 +274,7 @@
             if(!state.data.students.some(s=>s.id===stu.id)) state.data.students.push(state.user);
             progressOf(stu.id);save();navigate('studentHome');
             void syncCompletedMaterials();
+            void syncAllProgress();
           }catch(e){status.textContent='Gagal mencatat masuk: '+e.message;cls.disabled=false;student.disabled=false;button.disabled=false;}
         };
       }).catch(()=>{status.textContent='Tidak dapat menghubungi database. Periksa internet.';});
@@ -1009,6 +1042,8 @@
       const diag = cloudScores['diagnostic|diagnostik'] || p.diagnostic;
       const sum = cloudScores['summative|sumatif'] || p.summative;
       const quiz = cloudScores['quiz|topik'] || (p.quiz&&p.quiz.topic);
+      const nc = cloudScores['noncog|noncog'] || p.noncog;
+      const misiCount = Object.keys(cloudScores).filter(k=>k.startsWith('mission|')).length || (p.missions?Object.keys(p.missions).length:0);
       const pengetahuan = sum? (sum.score/sum.total*100) : (diag? diag.score/diag.total*100 : 0);
       const penerapan = p.simScore? Math.min(100, p.simScore*10) : 0;
       const sikap = 80;
@@ -1018,6 +1053,7 @@
       const dTxt = diag? `${diag.score}/${diag.total}` : "-";
       const qTxt = quiz? `${quiz.score}/${quiz.total}` : "-";
       const sTxt = sum? `${sum.score}/${sum.total}` : "-";
+      const ncTxt = nc? `${nc.notes||'Nonkognitif'}` : "-";
       showModal(`
         <h3>Detail: ${s.name} (${s.class_name||'Kelas '+s.kelas})</h3>
         <p>Diagnostik: ${dTxt}</p>
@@ -1026,6 +1062,8 @@
         <p>Nilai Praktik: ${practiceScore.toFixed(1)}</p>
         <p>Penerapan (simulasi): ${penerapan}</p>
         <p>Sikap (demo): ${sikap}</p>
+        <p>Nonkognitif: ${ncTxt}</p>
+        <p>Misi selesai: ${misiCount}</p>
         <hr/>
         <p><strong>Nilai Akhir:</strong> ${final.toFixed(1)} / 100</p>
         <p><strong>Status:</strong> ${final>=thr?"Mencapai Target":"Perlu Latihan/Bimbingan"}</p>
@@ -1153,7 +1191,7 @@
     async function showStudentProgresDetail(sid){
       const student = studentsCloud.find(x=>x.id===sid);
       if(!student) return;
-      // Ambil asesmen dari Supabase
+      // Ambil asesmen dari Supabase + fallback ke localStorage
       let cloudScores = {};
       try{
         const cloud = window.PJOK_CLOUD;
@@ -1166,6 +1204,7 @@
           }
         }
       }catch(e){}
+      const p = progressOf(sid);
       const completed = new Set((student.pjok_material_progress||[]).map(p=>p.material_id));
       const mats = D.materials.filter(m=>m.kelas.includes(student.grade));
       const done = mats.filter(m=>completed.has(m.id)).length;
@@ -1183,16 +1222,33 @@
           <td class="subtle">${m.indikator||'-'}</td>
         </tr>`;
       });
-      // Detail asesmen
+      // Detail asesmen (dari Supabase, fallback localStorage)
       html += `<thead><tr><th colspan="4">Asesmen</th></tr></thead><tbody>`;
       const asmRows = [
-        {label:'Diagnostik', key:'diagnostik', cat:'diagnostic'},
-        {label:'Kuis Topik', key:'topik', cat:'quiz'},
-        {label:'Sumatif', key:'sumatif', cat:'summative'}
+        {label:'Diagnostik', key:'diagnostik', local:p.diagnostic},
+        {label:'Kuis Topik', key:'topik', local:p.quiz&&p.quiz.topic},
+        {label:'Sumatif', key:'sumatif', local:p.summative},
+        {label:'Nonkognitif', key:'noncog', local:p.noncog},
+        {label:'Misi', key:'misi', local:p.missions?Object.keys(p.missions).length>0:null}
       ];
       for(const a of asmRows){
         const sc = cloudScores[a.key];
-        html += `<tr><td>${a.label}</td><td>${sc? sc.score+'/'+sc.total : '-'}</td><td colspan="2" class="subtle">${sc? ('Diupdate '+new Date(sc.updated_at).toLocaleDateString('id-ID')) : 'Belum ada data'}</td></tr>`;
+        const local = a.local;
+        const data = sc || local;
+        let val="-", updated="-";
+        if(data){
+          if(a.key==='misi'){
+            val = data? data+' misi' : "-";
+            updated = "Lokal";
+          } else if(a.key==='noncog'){
+            val = "Terisi";
+            updated = "Lokal";
+          } else {
+            val = data.score+'/'+data.total;
+            updated = sc? ('Diupdate '+new Date(sc.updated_at).toLocaleDateString('id-ID')) : "Lokal";
+          }
+        }
+        html += `<tr><td>${a.label}</td><td>${val}</td><td colspan="2" class="subtle">${updated}</td></tr>`;
       }
       html += `</tbody></table>
       <div class="mt-8 flex gap-8">
